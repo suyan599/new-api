@@ -1,16 +1,15 @@
-FROM oven/bun:latest AS builder
+FROM node:18-alpine AS builder
 
 WORKDIR /build
 COPY web/package.json .
-COPY web/bun.lock .
-RUN bun install --frozen-lockfile
+RUN npm install
 COPY ./web .
 COPY ./VERSION .
-# 增加内存限制和超时设置，禁用ESLint避免卡住
-RUN NODE_OPTIONS="--max-old-space-size=4096" \
+# 使用npm构建，增加内存限制
+RUN NODE_OPTIONS="--max-old-space-size=2048" \
     DISABLE_ESLINT_PLUGIN='true' \
     VITE_REACT_APP_VERSION=$(cat VERSION) \
-    timeout 600 bun run build
+    npm run build
 
 FROM golang:alpine AS builder2
 ENV GO111MODULE=on CGO_ENABLED=0
